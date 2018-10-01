@@ -40,38 +40,12 @@ class RemoteS3(RemoteBase):
     PARAM_ETAG = 'etag'
 
     def __init__(self, project, config):
-        import configobj
-
         self.project = project
-        storagepath = 's3://' + config.get(Config.SECTION_AWS_STORAGEPATH,
-                                           '').lstrip('/')
+        storagepath = 's3://' + config.get(Config.SECTION_AWS_STORAGEPATH,'').lstrip('/')
         self.url = config.get(Config.SECTION_REMOTE_URL, storagepath)
         self.region = config.get(Config.SECTION_AWS_REGION, None)
-        self.profile = os.getenv('AWS_PROFILE',
-                                 config.get(Config.SECTION_AWS_PROFILE,
-                                            'default'))
         self.endpoint_url = config.get(Config.SECTION_AWS_ENDPOINT_URL, None)
 
-        credentialpath = config.get(Config.SECTION_AWS_CREDENTIALPATH, None)
-        if credentialpath:
-            creds_conf = configobj.ConfigObj(credentialpath)
-            creds = creds_conf.get(self.profile, {})
-        else:
-            creds = {}
-
-        self.creds = creds
-        self.region = creds.get('region', self.region)
-        self.aws_access_key_id = creds.get('aws_access_key_id', None)
-        self.aws_secret_access_key = creds.get('aws_secret_access_key', None)
-        self.aws_session_token = creds.get('aws_session_token', None)
-
-        self.region = os.getenv('AWS_DEFAULT_REGION', self.region)
-        self.aws_access_key_id = os.getenv('AWS_ACCESS_KEY_ID',
-                                           self.aws_access_key_id)
-        self.aws_secret_access_key = os.getenv('AWS_SECRET_ACCESS_KEY',
-                                               self.aws_secret_access_key)
-        self.aws_session_token = os.getenv('AWS_SESSION_TOKEN',
-                                               self.aws_session_token)
     @property
     def bucket(self):
         return urlparse(self.url).netloc
@@ -82,14 +56,7 @@ class RemoteS3(RemoteBase):
 
     @property
     def s3(self):
-        if not self.creds:
-            session = boto3.session.Session(profile_name=self.profile)
-        else:
-            session = boto3.session.Session(
-                             aws_access_key_id=self.aws_access_key_id,
-                             aws_secret_access_key=self.aws_secret_access_key,
-                             aws_session_token=self.aws_session_token,
-                             region_name=self.region)
+        session = boto3.session.Session()
         return session.client('s3', endpoint_url=self.endpoint_url)
 
     def get_etag(self, bucket, key):
