@@ -63,13 +63,15 @@ class RemoteS3(RemoteBase):
         self.region = creds.get('region', self.region)
         self.aws_access_key_id = creds.get('aws_access_key_id', None)
         self.aws_secret_access_key = creds.get('aws_secret_access_key', None)
+        self.aws_session_token = creds.get('aws_session_token', None)
 
         self.region = os.getenv('AWS_DEFAULT_REGION', self.region)
         self.aws_access_key_id = os.getenv('AWS_ACCESS_KEY_ID',
                                            self.aws_access_key_id)
         self.aws_secret_access_key = os.getenv('AWS_SECRET_ACCESS_KEY',
                                                self.aws_secret_access_key)
-
+        self.aws_session_token = os.getenv('AWS_SESSION_TOKEN',
+                                               self.aws_session_token)
     @property
     def bucket(self):
         return urlparse(self.url).netloc
@@ -86,6 +88,7 @@ class RemoteS3(RemoteBase):
             session = boto3.session.Session(
                              aws_access_key_id=self.aws_access_key_id,
                              aws_secret_access_key=self.aws_secret_access_key,
+                             aws_session_token=self.aws_session_token,
                              region_name=self.region)
         return session.client('s3', endpoint_url=self.endpoint_url)
 
